@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Zhang Lab — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1a14;--surface:#182419;--card:#1e2f22;--border:#2d4535;--accent:#4a8c62;--gold:#c8a84b;--text:#e8f0ea;--muted:#7a9b82;--danger:#e05252;--success:#52b07a;--warning:#d4a843}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2.5rem;width:100%;max-width:400px}
+.login-logo{text-align:center;margin-bottom:2rem}
+.login-logo .icon{font-size:2.5rem;margin-bottom:.8rem}
+.login-logo h1{font-size:1.4rem;font-weight:700;margin-bottom:.3rem}
+.login-logo p{font-size:.82rem;color:var(--muted)}
+label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem}
+input[type=text],input[type=password],input[type=email],input[type=number],textarea,select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:.65rem .9rem;color:var(--text);font-size:.88rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+input:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;border-radius:6px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:#3d7a54}
+.btn-gold{background:var(--gold);color:#1a1000}.btn-gold:hover{background:#b8943a}
+.btn-danger{background:var(--danger);color:white}.btn-danger:hover{background:#c94444}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}.btn-ghost:hover{border-color:var(--accent);color:var(--text)}
+.btn-sm{padding:.35rem .8rem;font-size:.75rem}
+.btn-full{width:100%;justify-content:center}
+.err-msg{background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);border-radius:6px;padding:.7rem;font-size:.82rem;color:var(--danger);margin-top:.8rem;display:none}
+/* APP */
+.app{display:none;min-height:100vh}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;padding:1.5rem 0}
+.sidebar-logo{padding:0 1.2rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1rem}
+.sidebar-logo h2{font-size:.95rem;font-weight:700}
+.sidebar-logo p{font-size:.72rem;color:var(--muted);margin-top:.2rem}
+.role-badge{display:inline-block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.15rem .5rem;border-radius:10px;margin-top:.4rem}
+.role-prof{background:rgba(200,168,75,.15);color:var(--gold)}
+.role-student{background:rgba(74,140,98,.15);color:var(--accent)}
+.nav-item{display:flex;align-items:center;gap:.7rem;padding:.65rem 1.2rem;cursor:pointer;color:var(--muted);font-size:.85rem;font-weight:500;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(74,140,98,.08)}
+.nav-item.active{color:var(--text);background:rgba(74,140,98,.12);border-left-color:var(--accent)}
+.sidebar-footer{margin-top:auto;padding:1rem 1.2rem;border-top:1px solid var(--border)}
+.main{margin-left:220px;padding:2rem;min-height:100vh}
+.page-header{margin-bottom:2rem}
+.page-header h1{font-size:1.4rem;font-weight:700;margin-bottom:.3rem}
+.page-header p{font-size:.85rem;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.2rem}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem}
+.card-title{font-size:.95rem;font-weight:600}
+.member-row{display:flex;align-items:center;gap:1rem;padding:.9rem;border-radius:8px;border:1px solid var(--border);background:var(--surface);margin-bottom:.6rem}
+.member-avatar{width:44px;height:44px;border-radius:50%;background:var(--border);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.member-avatar img{width:100%;height:100%;object-fit:cover}
+.member-info{flex:1;min-width:0}
+.member-info h4{font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-info p{font-size:.75rem;color:var(--muted)}
+.member-actions{display:flex;gap:.4rem;flex-shrink:0}
+.pub-row{padding:.9rem;border-radius:8px;border:1px solid var(--border);background:var(--surface);margin-bottom:.6rem}
+.pub-row h4{font-size:.85rem;font-weight:600;margin-bottom:.3rem;line-height:1.4}
+.pub-meta{font-size:.75rem;color:var(--muted)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.modal-header h2{font-size:1.1rem;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer}
+.modal-footer{display:flex;gap:.8rem;justify-content:flex-end;margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--border)}
+.photo-upload-area{border:2px dashed var(--border);border-radius:8px;padding:2rem;text-align:center;cursor:pointer;transition:border-color .2s}
+.photo-upload-area:hover{border-color:var(--accent)}
+.photo-preview{width:120px;height:120px;border-radius:50%;overflow:hidden;margin:0 auto 1rem;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+.photo-preview img{width:100%;height:100%;object-fit:cover}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-group{margin-bottom:1.2rem}
+.readonly-notice{background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.25);border-radius:6px;padding:.7rem 1rem;font-size:.8rem;color:var(--warning);margin-bottom:1.5rem}
+.empty-state{text-align:center;padding:2.5rem;color:var(--muted)}
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.9rem 1.2rem;font-size:.85rem;font-weight:500;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:.6rem;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:var(--success);color:var(--success)}
+.toast.error{border-color:var(--danger);color:var(--danger)}
+.toast.loading{border-color:var(--gold);color:var(--gold)}
+.mini-spin{width:14px;height:14px;border:2px solid rgba(200,168,75,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* BOT */
+.chat-msgs{height:380px;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:10px;background:var(--surface);border-radius:8px;margin-bottom:1rem}
+.msg{max-width:88%;padding:10px 14px;border-radius:12px;font-size:.88rem;line-height:1.55}
+.msg.user{align-self:flex-end;background:rgba(74,140,98,.25);color:var(--text);border-bottom-right-radius:3px}
+.msg.bot{align-self:flex-start;background:var(--card);color:var(--text);border-bottom-left-radius:3px;border:1px solid var(--border)}
+.msg.ok{background:rgba(82,176,122,.15);color:var(--success);border-color:rgba(82,176,122,.3)}
+.msg.err{background:rgba(224,82,82,.12);color:var(--danger);border-color:rgba(224,82,82,.3)}
+.msg .ts{font-size:11px;opacity:.5;margin-top:5px}
+.chat-input-row{display:flex;gap:8px}
+.chat-input-row input{flex:1}
+.examples-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem}
+.ex-btn{font-size:.75rem;padding:4px 10px;border-radius:16px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
+.ex-btn:hover{border-color:var(--accent);color:var(--text)}
+.spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.15);border-top-color:var(--muted);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🌲</div>
+      <h1>Zhang Lab Admin</h1>
+      <p>University of Maine · ASCC</p>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPwd" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In →</button>
+    <div class="err-msg" id="loginErr">Incorrect password. Please try again.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h2>Zhang Lab Admin</h2>
+      <p>UMaine · ASCC</p>
+      <div class="role-badge" id="roleBadge">Professor</div>
+    </div>
+    <div class="nav-item active" onclick="showPage('bot')"     id="nav-bot">🤖 AI Bot</div>
+    <div class="nav-item"        onclick="showPage('team')"    id="nav-team">👥 Team Members</div>
+    <div class="nav-item"        onclick="showPage('pubs')"    id="nav-pubs">📄 Publications</div>
+    <div class="nav-item"        onclick="showPage('about')"   id="nav-about">📝 About & Bio</div>
+    <div class="nav-item"        onclick="showPage('settings')"id="nav-settings">⚙️ Settings</div>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-full btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- BOT PAGE -->
+    <div id="page-bot">
+      <div class="page-header">
+        <h1>🤖 AI Website Bot</h1>
+        <p>Send a natural language command — the bot will update your website automatically.</p>
+      </div>
+      <div class="card">
+        <div class="examples-row" id="examplesRow">
+          <span class="ex-btn" onclick="fillBot('Add paper: Cellulose hydrophobization via Zr4+ | ACS Applied Materials & Interfaces | 2025')">+ Paper</span>
+          <span class="ex-btn" onclick="fillBot('Add student: Sanskar Basnet | PhD Forest Resources | sanskar@maine.edu')">+ Student</span>
+          <span class="ex-btn" onclick="fillBot('Add alumni: Dr. Jane Smith | PhD Forest Resources | Scientist at 3M')">+ Alumni</span>
+          <span class="ex-btn" onclick="fillBot('Graduate Sesadhi Rajapaksha to Research Scientist at UMaine')">Graduate student</span>
+          <span class="ex-btn" onclick="fillBot('Citations: 2,500+')">Update citations</span>
+          <span class="ex-btn" onclick="fillBot('Remove paper: cellulose')">Remove paper</span>
+          <span class="ex-btn" onclick="fillBot('help')">Help</span>
+        </div>
+        <div class="chat-msgs" id="chatMsgs">
+          <div class="msg bot">Hi! Type a command and I'll update your website automatically. No extra accounts or API keys needed — everything runs right here.<br><span class="ts">Ready</span></div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="botInput" placeholder="e.g.  Add paper: title | journal | year" onkeydown="if(event.key==='Enter')botSend()"/>
+          <button class="btn btn-gold" onclick="botSend()">Send →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEAM PAGE -->
+    <div id="page-team" style="display:none">
+      <div class="page-header"><h1>👥 Team Members</h1><p>Manage current students and alumni</p></div>
+      <div id="teamReadonly" class="readonly-notice" style="display:none">⚠️ Students can add members but cannot delete existing ones.</div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Current Members</span><button class="btn btn-primary btn-sm" onclick="openAddMember('current')">+ Add Member</button></div>
+        <div id="currentList"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Alumni</span><button class="btn btn-primary btn-sm" onclick="openAddMember('alumni')">+ Add Alumni</button></div>
+        <div id="alumniList"></div>
+      </div>
+    </div>
+
+    <!-- PUBS PAGE -->
+    <div id="page-pubs" style="display:none">
+      <div class="page-header"><h1>📄 Publications</h1><p>Manage selected publications shown on the website</p></div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Publications <span id="pubCount" style="color:var(--muted);font-weight:400;font-size:.82rem"></span></span><button class="btn btn-primary btn-sm" onclick="openAddPub()">+ Add Publication</button></div>
+        <div id="pubList"></div>
+      </div>
+    </div>
+
+    <!-- ABOUT PAGE -->
+    <div id="page-about" style="display:none">
+      <div class="page-header"><h1>📝 About & Bio</h1><p>Edit lab bio and contact information</p></div>
+      <div id="aboutReadonly" class="readonly-notice" style="display:none">⚠️ Only professors can edit this section.</div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Lab Bio</span></div>
+        <div class="form-group"><label>Bio Text</label><textarea id="bioText" rows="6"></textarea></div>
+        <div class="form-group"><label>Citations Count</label><input type="text" id="citInput" placeholder="e.g. 2,300+"/></div>
+        <button class="btn btn-gold" onclick="saveBio()">💾 Save Bio</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Contact Information</span></div>
+        <div class="two-col">
+          <div class="form-group"><label>Email</label><input type="email" id="cEmail"/></div>
+          <div class="form-group"><label>Office</label><input type="text" id="cOffice"/></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="cPhone"/></div>
+          <div class="form-group"><label>Google Scholar URL</label><input type="text" id="cScholar"/></div>
+        </div>
+        <button class="btn btn-gold" onclick="saveContact()">💾 Save Contact Info</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="page-settings" style="display:none">
+      <div class="page-header"><h1>⚙️ Settings</h1><p>GitHub connection and access passwords</p></div>
+      <div id="settingsReadonly" class="readonly-notice" style="display:none">⚠️ Only professors can change settings.</div>
+      <div class="card">
+        <div style="margin-bottom:1.5rem">
+          <h3 style="font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)">🔑 GitHub Connection</h3>
+          <div class="form-group"><label>Personal Access Token</label><input type="password" id="ghToken" placeholder="github_pat_xxxxxxxxxxxxxxxxxxxx"/><div style="font-size:.75rem;color:var(--muted);margin-top:.4rem">GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens</div></div>
+          <div class="form-group"><label>Repository</label><input type="text" id="ghRepo" placeholder="njfuxf/njfuxf.github.io"/></div>
+          <button class="btn btn-primary" onclick="saveAndTestGH()">Save & Test Connection</button>
+          <span id="ghResult" style="margin-left:.8rem;font-size:.82rem"></span>
+        </div>
+        <div>
+          <h3 style="font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)">🔒 Passwords</h3>
+          <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">Students only need the Student Password. Professor Password gives full access.</p>
+          <div class="two-col">
+            <div class="form-group"><label>Professor Password</label><input type="password" id="newProfPwd" placeholder="New professor password"/></div>
+            <div class="form-group"><label>Student Password</label><input type="password" id="newStuPwd" placeholder="New student password"/></div>
+          </div>
+          <button class="btn btn-gold" onclick="savePwds()">🔒 Update Passwords</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MEMBER MODAL -->
+<div class="modal-overlay" id="memberModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="memberModalTitle">Add Member</h2><button class="modal-close" onclick="closeModal('memberModal')">✕</button></div>
+    <input type="hidden" id="mType"/><input type="hidden" id="mEditIdx"/>
+    <div class="photo-upload-area" onclick="document.getElementById('photoInput').click()" style="margin-bottom:1.2rem">
+      <div class="photo-preview" id="photoPreview"><span>👤</span></div>
+      <p style="font-size:.85rem;font-weight:500">Click to upload photo</p>
+      <p style="font-size:.75rem;color:var(--muted);margin-top:.4rem">Any size — auto-cropped to square 400×400</p>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(event)"/>
+    <canvas id="cropCanvas" style="display:none"></canvas>
+    <div id="photoNote" style="font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:1rem"></div>
+    <div class="form-group"><label>Full Name *</label><input type="text" id="mName" placeholder="Dr. First Last"/></div>
+    <div class="form-group"><label>Degree / Role *</label><input type="text" id="mDegree" placeholder="Ph.D. Sustainable Bioproducts"/></div>
+    <div class="form-group"><label>School / University</label><input type="text" id="mSchool" placeholder="University of Maine"/></div>
+    <div class="form-group"><label>Email</label><input type="email" id="mEmail" placeholder="name@maine.edu"/></div>
+    <div class="form-group" id="mNoteGroup"><label>Additional Note (alumni)</label><input type="text" id="mNote" placeholder="M.S. Chemistry, Wayne State University"/></div>
+    <div class="form-group" id="mPosGroup"><label>Current Position (alumni)</label><input type="text" id="mPos" placeholder="Research Chemist at Company LLC"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('memberModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveMember()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PUB MODAL -->
+<div class="modal-overlay" id="pubModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="pubModalTitle">Add Publication</h2><button class="modal-close" onclick="closeModal('pubModal')">✕</button></div>
+    <input type="hidden" id="pEditIdx"/>
+    <div class="form-group"><label>Title *</label><textarea id="pTitle" rows="2" placeholder="Full paper title"></textarea></div>
+    <div class="form-group"><label>Authors</label><input type="text" id="pAuthors" placeholder="Zhang, X. et al."/></div>
+    <div class="form-group"><label>Journal *</label><input type="text" id="pJournal" placeholder="ACS Applied Materials & Interfaces"/></div>
+    <div class="form-group"><label>Year *</label><input type="number" id="pYear" placeholder="2025" min="1990" max="2030"/></div>
+    <div class="form-group"><label>DOI / URL (optional)</label><input type="text" id="pDoi" placeholder="https://doi.org/10.xxxx/..."/></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('pubModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="savePub()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── AUTH ──────────────────────────────────────────────────
+const K={prof:'zl_prof',stu:'zl_stu',tok:'zl_tok',repo:'zl_repo'};
+const getProfPwd=()=>localStorage.getItem(K.prof)||'prof2025';
+const getStuPwd =()=>localStorage.getItem(K.stu) ||'lab2025';
+const getTok    =()=>localStorage.getItem(K.tok) ||'';
+const getRepo   =()=>localStorage.getItem(K.repo)||'njfuxf/njfuxf.github.io';
+let role=null, content=null, photoB64=null, photoFilename='';
+let toastTimer;
+
+function doLogin(){
+  const p=document.getElementById('loginPwd').value;
+  if(p===getProfPwd()){role='professor';startApp();}
+  else if(p===getStuPwd()){role='student';startApp();}
+  else{const e=document.getElementById('loginErr');e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+}
+function doLogout(){
+  role=null;content=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('loginPwd').value='';
+}
+async function startApp(){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('roleBadge').textContent=role==='professor'?'Professor':'Student';
+  document.getElementById('roleBadge').className='role-badge '+(role==='professor'?'role-prof':'role-student');
+  if(role==='student') document.getElementById('nav-settings').style.display='none';
+  document.getElementById('ghToken').value=getTok();
+  document.getElementById('ghRepo').value=getRepo();
+  showToast('Loading content...','loading');
+  await fetchContent();
+  renderTeam(); renderPubs(); renderAbout();
+  showToast('Ready ✓','success');
+}
+
+// ── GITHUB ────────────────────────────────────────────────
+async function ghGet(path){
+  const r=await fetch(`https://api.github.com/repos/${getRepo()}/contents/${path}`,{headers:{Authorization:`token ${getTok()}`,Accept:'application/vnd.github.v3+json'}});
+  if(!r.ok) throw new Error('GitHub read failed ('+r.status+')');
+  return r.json();
+}
+async function ghPut(path,str,msg,isBin=false){
+  let sha=null;
+  try{const d=await ghGet(path);sha=d.sha;}catch(e){}
+  const body={message:msg,content:isBin?str:btoa(unescape(encodeURIComponent(str))),...(sha&&{sha})};
+  const r=await fetch(`https://api.github.com/repos/${getRepo()}/contents/${path}`,{method:'PUT',headers:{Authorization:`token ${getTok()}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){const e=await r.json();throw new Error(e.message||'Push failed');}
+}
+async function fetchContent(){
+  try{const d=await ghGet('content.json');content=JSON.parse(atob(d.content.replace(/\n/g,'')));}
+  catch(e){showToast('Could not load content.json — check Settings','error');content={about:{name:'',title:'',email:'',office:'',phone:'',scholar:'',citations:'',bio:''},education:[],appointments:[],research_areas:[],team:{current:[],alumni:[]},publications:[]};}
+}
+async function pushContent(msg){
+  if(!getTok()){showToast('No GitHub token — check Settings','error');return false;}
+  showToast('Saving...','loading');
+  try{await ghPut('content.json',JSON.stringify(content,null,2),msg);showToast('Published! ✓','success');return true;}
+  catch(e){showToast('Error: '+e.message,'error');return false;}
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.className='toast '+type;
+  t.innerHTML=(type==='loading'?'<div class="mini-spin"></div>':type==='success'?'✓':'✗')+' '+msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  if(type!=='loading') toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ── NAV ───────────────────────────────────────────────────
+function showPage(n){
+  ['bot','team','pubs','about','settings'].forEach(p=>{
+    document.getElementById('page-'+p).style.display=p===n?'':'none';
+    document.getElementById('nav-'+p)?.classList.toggle('active',p===n);
+  });
+}
+
+// ── BOT ───────────────────────────────────────────────────
+function fillBot(t){document.getElementById('botInput').value=t;document.getElementById('botInput').focus();}
+function botTs(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function botAddMsg(html,cls='bot'){
+  const m=document.getElementById('chatMsgs');
+  const d=document.createElement('div');d.className='msg '+cls;
+  d.innerHTML=html+'<div class="ts">'+botTs()+'</div>';
+  m.appendChild(d);m.scrollTop=m.scrollHeight;return d;
+}
+function parseCmd(raw){
+  const t=raw.trim(),low=t.toLowerCase();
+  if(/^add\s+pa?pe?r[:\-]/i.test(t)){
+    const body=t.replace(/^add\s+pa?pe?r[:\-]\s*/i,'').trim();
+    const parts=body.split('|').map(s=>s.trim()).filter(Boolean);
+    if(parts.length<2) return{action:'error',msg:'Format: Add paper: [title] | [journal] | [year]'};
+    const year=parts.find(p=>/^\d{4}$/.test(p))||String(new Date().getFullYear());
+    const others=parts.filter(p=>p!==parts[0]&&!/^\d{4}$/.test(p)&&!/https?:/i.test(p));
+    const doi=parts.find(p=>/https?:|doi\.org/i.test(p))||'';
+    return{action:'add_pub',title:parts[0],authors:'Zhang, X. et al.',journal:others[0]||'',year,doi};
+  }
+  if(/^add\s+student[:\-]/i.test(t)){
+    const parts=t.replace(/^add\s+student[:\-]\s*/i,'').split('|').map(s=>s.trim()).filter(Boolean);
+    if(!parts[0]) return{action:'error',msg:'Format: Add student: [name] | [degree] | [email]'};
+    return{action:'add_member',mtype:'current',name:parts[0],degree:parts[1]||'',school:'University of Maine',email:parts.find(p=>p.includes('@'))||''};
+  }
+  if(/^add\s+alumni[:\-]/i.test(t)){
+    const parts=t.replace(/^add\s+alumni[:\-]\s*/i,'').split('|').map(s=>s.trim()).filter(Boolean);
+    if(!parts[0]) return{action:'error',msg:'Format: Add alumni: [name] | [degree] | [current position]'};
+    return{action:'add_member',mtype:'alumni',name:parts[0],degree:parts[1]||'',school:'',email:'',current_position:parts[2]||''};
+  }
+  if(/^graduate\s+/i.test(t)){
+    const m=t.match(/^graduate\s+(.+?)\s+to\s+(.+)$/i);
+    if(!m) return{action:'error',msg:'Format: Graduate [name] to [new position]'};
+    return{action:'graduate',name:m[1].trim(),position:m[2].trim()};
+  }
+  if(/citation/i.test(low)){
+    const m=t.match(/[\d,]+\+?/);
+    if(!m) return{action:'error',msg:'Format: Citations: 2,500+'};
+    return{action:'update_citations',citations:m[0].includes('+')?m[0]:m[0]+'+'};
+  }
+  if(/^bio[:\-]/i.test(t)){
+    const bio=t.replace(/^bio[:\-]\s*/i,'').trim();
+    if(!bio) return{action:'error',msg:'Format: Bio: [new bio text]'};
+    return{action:'update_bio',bio};
+  }
+  if(/^email[:\-]/i.test(t)||(/update/i.test(t)&&/email/i.test(t))){
+    const m=t.match(/[\w.+\-]+@[\w.\-]+\.\w+/);
+    if(!m) return{action:'error',msg:'Format: Email: name@maine.edu'};
+    return{action:'update_contact',field:'email',value:m[0]};
+  }
+  if(/^phone[:\-]/i.test(t)){
+    const m=t.match(/[\d\-\(\)\s\.+]{7,}/);
+    if(!m) return{action:'error',msg:'Format: Phone: 207-555-0100'};
+    return{action:'update_contact',field:'phone',value:m[0].trim()};
+  }
+  if(/^remove\s+pa?pe?r[:\-]/i.test(t)){
+    const kw=t.replace(/^remove\s+pa?pe?r[:\-]\s*/i,'').trim().toLowerCase();
+    return{action:'remove_pub',keyword:kw};
+  }
+  if(/^help$/i.test(low)){return{action:'help'};}
+  return{action:'unknown'};
+}
+async function botSend(){
+  const inp=document.getElementById('botInput');
+  const raw=inp.value.trim();if(!raw)return;inp.value='';
+  if(!getTok()){botAddMsg('Please go to ⚙️ Settings first and save your GitHub token.','err');return;}
+  botAddMsg(raw,'user');
+  const cmd=parseCmd(raw);
+  if(cmd.action==='help'){botAddMsg('<b>Commands:</b><br>• Add paper: title | journal | year<br>• Add student: name | degree | email<br>• Add alumni: name | degree | position<br>• Graduate [name] to [position]<br>• Citations: 2,500+<br>• Bio: new text<br>• Email: address@maine.edu<br>• Remove paper: keyword');return;}
+  if(cmd.action==='error'){botAddMsg(cmd.msg,'err');return;}
+  if(cmd.action==='unknown'){botAddMsg('Command not recognized. Type <b>help</b> to see all commands.','err');return;}
+  const thinking=botAddMsg('<span class="spinner"></span> Loading content...');
+  try{
+    if(!content) await fetchContent();
+    let summary='';
+    if(cmd.action==='add_pub'){
+      content.publications.unshift({id:'pub'+Date.now(),title:cmd.title,authors:cmd.authors,journal:cmd.journal,year:String(cmd.year),doi:cmd.doi||''});
+      summary='Added paper: <b>'+cmd.title+'</b>';
+    }
+    else if(cmd.action==='add_member'){
+      const id=cmd.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+      content.team[cmd.mtype].push({id,name:cmd.name,degree:cmd.degree,school:cmd.school,email:cmd.email,photo:'',...(cmd.mtype==='alumni'?{note:'',current_position:cmd.current_position}:{})});
+      summary='Added '+(cmd.mtype==='current'?'student':'alumni')+': <b>'+cmd.name+'</b>';
+    }
+    else if(cmd.action==='graduate'){
+      const idx=content.team.current.findIndex(m=>m.name.toLowerCase().includes(cmd.name.toLowerCase()));
+      if(idx===-1) throw new Error('Could not find "'+cmd.name+'" in current members.');
+      const m={...content.team.current[idx],current_position:cmd.position};
+      content.team.alumni.unshift(m);content.team.current.splice(idx,1);
+      summary='Moved <b>'+m.name+'</b> to alumni';
+    }
+    else if(cmd.action==='update_citations'){content.about.citations=cmd.citations;summary='Citations updated to <b>'+cmd.citations+'</b>';}
+    else if(cmd.action==='update_bio'){content.about.bio=cmd.bio;summary='Bio updated';}
+    else if(cmd.action==='update_contact'){content.about[cmd.field]=cmd.value;summary=cmd.field+' updated to <b>'+cmd.value+'</b>';}
+    else if(cmd.action==='remove_pub'){
+      const before=content.publications.length;
+      content.publications=content.publications.filter(p=>!p.title.toLowerCase().includes(cmd.keyword));
+      const n=before-content.publications.length;
+      if(n===0) throw new Error('No paper found matching "'+cmd.keyword+'"');
+      summary='Removed '+n+' paper(s) matching "'+cmd.keyword+'"';
+    }
+    thinking.innerHTML='<span class="spinner"></span> Publishing...<div class="ts">'+botTs()+'</div>';
+    await ghPut('content.json',JSON.stringify(content,null,2),'Bot: '+summary.replace(/<[^>]+>/g,''));
+    thinking.className='msg ok';
+    thinking.innerHTML=summary+'<br><small style="opacity:.7">Website updates in ~1 minute.</small><div class="ts">'+botTs()+'</div>';
+    renderTeam();renderPubs();renderAbout();
+  }catch(e){
+    thinking.className='msg err';
+    thinking.innerHTML='Error: '+e.message+'<div class="ts">'+botTs()+'</div>';
+  }
+}
+
+// ── TEAM ──────────────────────────────────────────────────
+function renderTeam(){
+  document.getElementById('teamReadonly').style.display=role==='student'?'':'none';
+  ['current','alumni'].forEach(type=>{
+    const el=document.getElementById(type+'List');
+    const items=content.team[type];
+    if(!items.length){el.innerHTML='<div class="empty-state"><p>No members yet</p></div>';return;}
+    el.innerHTML=items.map((m,i)=>`<div class="member-row">
+      <div class="member-avatar">${m.photo?`<img src="images/${m.photo}" onerror="this.parentElement.innerHTML='👤'"/>`:'👤'}</div>
+      <div class="member-info"><h4>${m.name}</h4><p>${m.degree}${m.current_position?' · '+m.current_position:''}</p></div>
+      <div class="member-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEditMember('${type}',${i})">Edit</button>
+        ${role==='professor'?`<button class="btn btn-danger btn-sm" onclick="deleteMember('${type}',${i})">Delete</button>`:''}
+      </div></div>`).join('');
+  });
+}
+function openAddMember(type){
+  document.getElementById('memberModalTitle').textContent='Add '+(type==='current'?'Current Member':'Alumni');
+  document.getElementById('mType').value=type;document.getElementById('mEditIdx').value='';
+  ['mName','mDegree','mSchool','mEmail','mNote','mPos'].forEach(id=>document.getElementById(id).value='');
+  clearPhoto();
+  document.getElementById('mNoteGroup').style.display=type==='alumni'?'':'none';
+  document.getElementById('mPosGroup').style.display=type==='alumni'?'':'none';
+  openModal('memberModal');
+}
+function openEditMember(type,idx){
+  const m=content.team[type][idx];
+  document.getElementById('memberModalTitle').textContent='Edit Member';
+  document.getElementById('mType').value=type;document.getElementById('mEditIdx').value=idx;
+  document.getElementById('mName').value=m.name||'';document.getElementById('mDegree').value=m.degree||'';
+  document.getElementById('mSchool').value=m.school||'';document.getElementById('mEmail').value=m.email||'';
+  document.getElementById('mNote').value=m.note||'';document.getElementById('mPos').value=m.current_position||'';
+  document.getElementById('mNoteGroup').style.display=type==='alumni'?'':'none';
+  document.getElementById('mPosGroup').style.display=type==='alumni'?'':'none';
+  if(m.photo){document.getElementById('photoPreview').innerHTML=`<img src="images/${m.photo}"/>`;photoFilename=m.photo;}
+  else clearPhoto();
+  openModal('memberModal');
+}
+async function saveMember(){
+  const type=document.getElementById('mType').value;
+  const editIdx=document.getElementById('mEditIdx').value;
+  const name=document.getElementById('mName').value.trim();
+  const degree=document.getElementById('mDegree').value.trim();
+  if(!name||!degree){showToast('Name and Degree are required','error');return;}
+  const id=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  let photoFile=photoFilename;
+  if(photoB64){
+    photoFile=id+'.jpg';
+    try{await ghPut('images/'+photoFile,photoB64,'Upload photo: '+photoFile,true);}
+    catch(e){showToast('Photo upload failed: '+e.message,'error');return;}
+  }
+  const member={id,name,degree,school:document.getElementById('mSchool').value.trim(),email:document.getElementById('mEmail').value.trim(),photo:photoFile,...(type==='alumni'?{note:document.getElementById('mNote').value.trim(),current_position:document.getElementById('mPos').value.trim()}:{})};
+  if(editIdx!=='') content.team[type][parseInt(editIdx)]=member;
+  else content.team[type].push(member);
+  const ok=await pushContent((editIdx!==''?'Update':'Add')+' member: '+name);
+  if(ok){closeModal('memberModal');renderTeam();}
+}
+async function deleteMember(type,idx){
+  if(!confirm('Delete this member?'))return;
+  content.team[type].splice(idx,1);
+  const ok=await pushContent('Remove member');if(ok)renderTeam();
+}
+function handlePhoto(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.getElementById('cropCanvas');
+      canvas.width=400;canvas.height=400;
+      const ctx=canvas.getContext('2d');
+      const size=Math.min(img.width,img.height);
+      const sx=(img.width-size)/2,sy=(img.height-size)/2;
+      ctx.drawImage(img,sx,sy,size,size,0,0,400,400);
+      const dataURL=canvas.toDataURL('image/jpeg',0.88);
+      photoB64=dataURL.split(',')[1];
+      document.getElementById('photoPreview').innerHTML=`<img src="${dataURL}"/>`;
+      const name=document.getElementById('mName').value.trim();
+      const id=name?name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''):file.name.split('.')[0];
+      photoFilename=id+'.jpg';
+      document.getElementById('photoNote').textContent='✓ Will upload as: '+photoFilename;
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);event.target.value='';
+}
+function clearPhoto(){photoB64=null;photoFilename='';document.getElementById('photoPreview').innerHTML='<span>👤</span>';document.getElementById('photoNote').textContent='';}
+
+// ── PUBS ──────────────────────────────────────────────────
+function renderPubs(){
+  const el=document.getElementById('pubList');
+  document.getElementById('pubCount').textContent='('+content.publications.length+')';
+  if(!content.publications.length){el.innerHTML='<div class="empty-state"><p>No publications yet</p></div>';return;}
+  el.innerHTML=content.publications.map((p,i)=>`<div class="pub-row"><h4>${p.title}</h4><p class="pub-meta">${p.authors} · <strong style="color:var(--accent)">${p.journal}</strong> · ${p.year}</p><div style="display:flex;gap:.4rem;margin-top:.6rem"><button class="btn btn-ghost btn-sm" onclick="openEditPub(${i})">Edit</button>${role==='professor'?`<button class="btn btn-danger btn-sm" onclick="deletePub(${i})">Delete</button>`:''}</div></div>`).join('');
+}
+function openAddPub(){
+  document.getElementById('pubModalTitle').textContent='Add Publication';
+  document.getElementById('pEditIdx').value='';
+  ['pTitle','pAuthors','pJournal','pDoi'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pYear').value=new Date().getFullYear();
+  openModal('pubModal');
+}
+function openEditPub(idx){
+  const p=content.publications[idx];
+  document.getElementById('pubModalTitle').textContent='Edit Publication';
+  document.getElementById('pEditIdx').value=idx;
+  document.getElementById('pTitle').value=p.title||'';document.getElementById('pAuthors').value=p.authors||'';
+  document.getElementById('pJournal').value=p.journal||'';document.getElementById('pYear').value=p.year||'';
+  document.getElementById('pDoi').value=p.doi||'';
+  openModal('pubModal');
+}
+async function savePub(){
+  const title=document.getElementById('pTitle').value.trim();
+  const journal=document.getElementById('pJournal').value.trim();
+  const year=document.getElementById('pYear').value;
+  if(!title||!journal||!year){showToast('Title, Journal, and Year required','error');return;}
+  const editIdx=document.getElementById('pEditIdx').value;
+  const pub={id:editIdx!==''?content.publications[parseInt(editIdx)].id:'pub'+Date.now(),title,authors:document.getElementById('pAuthors').value.trim(),journal,year:String(year),doi:document.getElementById('pDoi').value.trim()};
+  if(editIdx!=='') content.publications[parseInt(editIdx)]=pub;
+  else content.publications.unshift(pub);
+  const ok=await pushContent((editIdx!==''?'Update':'Add')+' publication: '+title.substring(0,50));
+  if(ok){closeModal('pubModal');renderPubs();}
+}
+async function deletePub(idx){
+  if(!confirm('Delete this publication?'))return;
+  content.publications.splice(idx,1);
+  const ok=await pushContent('Remove publication');if(ok)renderPubs();
+}
+
+// ── ABOUT ─────────────────────────────────────────────────
+function renderAbout(){
+  const isStudent=role==='student';
+  document.getElementById('aboutReadonly').style.display=isStudent?'':'none';
+  const a=content.about;
+  document.getElementById('bioText').value=a.bio||'';document.getElementById('citInput').value=a.citations||'';
+  document.getElementById('cEmail').value=a.email||'';document.getElementById('cOffice').value=a.office||'';
+  document.getElementById('cPhone').value=a.phone||'';document.getElementById('cScholar').value=a.scholar||'';
+}
+async function saveBio(){
+  if(role!=='professor'){showToast('Professors only','error');return;}
+  content.about.bio=document.getElementById('bioText').value.trim();
+  content.about.citations=document.getElementById('citInput').value.trim();
+  await pushContent('Update bio');
+}
+async function saveContact(){
+  if(role!=='professor'){showToast('Professors only','error');return;}
+  content.about.email=document.getElementById('cEmail').value.trim();
+  content.about.office=document.getElementById('cOffice').value.trim();
+  content.about.phone=document.getElementById('cPhone').value.trim();
+  content.about.scholar=document.getElementById('cScholar').value.trim();
+  await pushContent('Update contact info');
+}
+
+// ── SETTINGS ──────────────────────────────────────────────
+async function saveAndTestGH(){
+  const token=document.getElementById('ghToken').value.trim();
+  const repo=document.getElementById('ghRepo').value.trim();
+  if(token) localStorage.setItem(K.tok,token);
+  if(repo) localStorage.setItem(K.repo,repo);
+  const el=document.getElementById('ghResult');el.textContent='Testing...';
+  try{
+    const r=await fetch(`https://api.github.com/repos/${repo}`,{headers:{Authorization:`token ${token}`}});
+    if(r.ok){el.style.color='var(--success)';el.textContent='✓ Connected!';}
+    else{el.style.color='var(--danger)';el.textContent='✗ Failed ('+r.status+')';}
+  }catch(e){el.style.color='var(--danger)';el.textContent='✗ Network error';}
+}
+function savePwds(){
+  const pp=document.getElementById('newProfPwd').value.trim();
+  const sp=document.getElementById('newStuPwd').value.trim();
+  if(pp) localStorage.setItem(K.prof,pp);if(sp) localStorage.setItem(K.stu,sp);
+  document.getElementById('newProfPwd').value='';document.getElementById('newStuPwd').value='';
+  showToast('Passwords updated ✓','success');
+}
+
+// ── MODALS ────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');photoB64=null;}
+</script>
+</body>
+</html>

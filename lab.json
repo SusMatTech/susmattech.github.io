@@ -1,0 +1,32 @@
+{
+  "name": "SusMat Lab",
+  "full_name": "Sustainable Materials & Technologies Laboratory",
+  "institution": "University of Maine",
+  "department": "Advanced Structures and Composites Center | School of Forest Resources",
+  "tagline": "Advancing sustainable materials from forest to function",
+  "description": "The SusMat Lab at UMaine is dedicated to advancing innovative technologies that integrate biobased materials into additive manufacturing, develop biobased carbon nanomaterials for environmental remediation, synthesize biobased thermosets for adhesives and coatings, and apply cellulosic nanomaterials in sustainable packaging. With an interdisciplinary focus, our mission is to lead the development of technologies that not only minimize environmental impact but also foster ecosystem regeneration and drive the circular economy.",
+  "email": "xuefeng.zhang1@maine.edu",
+  "address": "Advanced Structures and Composites Center, University of Maine, Orono, ME 04469",
+  "research_areas": [
+    {
+      "icon": "🌲",
+      "title": "Lignocellulosic Composites",
+      "desc": "Engineering wood fiber and cellulose interfaces for high-performance bio-based composite materials."
+    },
+    {
+      "icon": "🏗️",
+      "title": "Large-Format Additive Manufacturing",
+      "desc": "3D printing of bio-based materials for sustainable housing and large structural applications."
+    },
+    {
+      "icon": "📦",
+      "title": "Sustainable Packaging",
+      "desc": "PFAS-free, compostable barrier coatings and bio-based packaging systems replacing petrochemical materials."
+    },
+    {
+      "icon": "⚗️",
+      "title": "Cellulose & Lignin Chemistry",
+      "desc": "Fundamental surface and interface chemistry of lignocellulosic nanomaterials including CNF and lignin valorization."
+    }
+  ]
+}
