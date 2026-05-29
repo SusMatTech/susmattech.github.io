@@ -165,7 +165,10 @@ const prompt = `You are the AI update bot for the SusMat Lab website at the Univ
 Read the update request and return a single valid JSON object.
 
 CRITICAL RULES:
-- Return ONLY raw JSON. No markdown. No backticks. No explanation.
+- Your ENTIRE response must be a single JSON object starting with { and ending with }
+- NO asterisks, NO stars, NO markdown, NO backticks, NO bold, NO explanation before or after
+- First character of response MUST be {
+- Last character of response MUST be }
 - ALL string values must be in English.
 - Complete valid JSON only, never truncate.
 
@@ -198,7 +201,10 @@ console.log('Gemini response:', rawText.slice(0, 400));
 
 let update;
 try {
-  const clean = rawText.replace(/^```json\s*/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  const clean = rawText
+    .replace(/^```json\s*/i,'').replace(/^```/,'').replace(/```$/,'')
+    .replace(/^\*+/,'').replace(/\*+$/,'')
+    .trim();
   update = JSON.parse(clean);
 } catch(e) {
   const match = rawText.match(/\{[\s\S]*\}/);
