@@ -40,7 +40,8 @@ jobs:
           SUMMARY=$(cat update_summary.txt 2>/dev/null || echo "Lab update")
           git config user.name "SusMat Bot"
           git config user.email "bot@susmattech.github.io"
-          git add data/ assets/
+          git add data/
+          git add assets/ 2>/dev/null || true
           git diff --cached --quiet || git commit -m "🤖 Bot: ${SUMMARY} (Issue #${{ github.event.issue.number }})"
           git push
 
