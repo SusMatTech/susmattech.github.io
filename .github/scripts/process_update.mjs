@@ -165,7 +165,9 @@ const prompt = `You are the AI update bot for the SusMat Lab website at the Univ
 Read the update request and return a single valid JSON object.
 
 CRITICAL RULES:
-- Your ENTIRE response must be a single JSON object starting with { and ending with }
+- Your ENTIRE response must be ONE single JSON object starting with { and ending with }
+- NEVER return an array [...]. Always return exactly one operation as one JSON object {}.
+- If request asks to delete multiple items, only process the FIRST one mentioned.
 - NO asterisks, NO stars, NO markdown, NO backticks, NO bold, NO explanation before or after
 - First character of response MUST be {
 - Last character of response MUST be }
