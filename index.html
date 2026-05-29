@@ -546,6 +546,7 @@
 
     // Filters
     const types = ['all', ...new Set(news.map(n=>n.type))];
+    const filtered = filter==='all' ? news : news.filter(n=>n.type===filter);
     $('news-filters').innerHTML = types.map(t=>`
       <button class="filter-btn ${t===filter?'active':''}" data-type="${t}" onclick="renderNews('${t}')">
         ${t==='all'?'All':t.charAt(0).toUpperCase()+t.slice(1)}
