@@ -13,7 +13,6 @@ jobs:
   process-update:
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.issue.labels.*.name, 'lab-update') ||
       startsWith(github.event.issue.title, '[UPDATE]') ||
       startsWith(github.event.issue.title, '[update]')
 
