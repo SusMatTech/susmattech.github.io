@@ -1,0 +1,76 @@
+name: 🤖 AI Lab Update Bot
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  process-update:
+    runs-on: ubuntu-latest
+    if: |
+      startsWith(github.event.issue.title, '[UPDATE]') ||
+      startsWith(github.event.issue.title, '[update]')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run update script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GDRIVE_SERVICE_ACCOUNT: ${{ secrets.GDRIVE_SERVICE_ACCOUNT }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: node .github/scripts/process_update.mjs
+
+      - name: Commit and push
+        run: |
+          SUMMARY=$(cat update_summary.txt 2>/dev/null || echo "Lab update")
+          git config user.name "SusMat Bot"
+          git config user.email "bot@susmattech.github.io"
+          git add data/ assets/
+          git diff --cached --quiet || git commit -m "🤖 Bot: ${SUMMARY} (Issue #${{ github.event.issue.number }})"
+          git push
+
+      - name: Comment success and close
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('update_summary.txt', 'utf8').trim();
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `✅ **Update applied!**\n\n> ${summary}\n\n🌐 Website refreshes in **1–2 minutes**.\n\n*— SusMat Bot 🤖*`
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
+
+      - name: Comment on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ **Update failed.** Please rephrase your request or check that \`GEMINI_API_KEY\` is set.\n\n*— SusMat Bot 🤖*`
+            });
