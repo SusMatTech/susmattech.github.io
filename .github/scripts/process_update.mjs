@@ -107,16 +107,15 @@ async function callGemini(prompt) {
   const payload = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: {
-      maxOutputTokens: 512,
-      temperature: 0.0,
-      responseMimeType: 'application/json'
+      maxOutputTokens: 1024,
+      temperature: 0.0
     }
   });
 
   const result = await new Promise((resolve, reject) => {
     const req = https.request({
       hostname: 'generativelanguage.googleapis.com',
-      path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
