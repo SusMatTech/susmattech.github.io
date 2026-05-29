@@ -1,0 +1,202 @@
+name: 🤖 AI Lab Update Bot
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  process-update:
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.issue.labels.*.name, 'lab-update') ||
+      startsWith(github.event.issue.title, '[UPDATE]') ||
+      startsWith(github.event.issue.title, '[update]')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Process update with Gemini AI
+        id: ai_process
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_USER: ${{ github.event.issue.user.login }}
+        run: |
+          cat << 'SCRIPT' > process_update.mjs
+          import fs from 'fs';
+          import https from 'https';
+
+          const issueTitle = process.env.ISSUE_TITLE;
+          const issueBody  = process.env.ISSUE_BODY || '';
+          const fullText   = `Title: ${issueTitle}\n\n${issueBody}`;
+
+          const news    = JSON.parse(fs.readFileSync('data/news.json', 'utf8'));
+          const members = JSON.parse(fs.readFileSync('data/members.json', 'utf8'));
+          const pubs    = JSON.parse(fs.readFileSync('data/publications.json', 'utf8'));
+
+          const today = new Date().toISOString().split('T')[0];
+
+          const prompt = `You are the AI update bot for the SusMat Lab website at the University of Maine.
+You receive natural language update requests and return ONLY a valid JSON object — no markdown, no backticks, no explanation.
+
+Today's date: ${today}
+
+Current data summary:
+- News: ${news.length} items, max id = ${Math.max(...news.map(n=>n.id), 0)}
+- Members: ${members.length} members, max id = ${Math.max(...members.map(m=>m.id), 0)}
+- Publications: ${pubs.length} pubs, max id = ${Math.max(...pubs.map(p=>p.id), 0)}
+
+Return a JSON object with EXACTLY this structure:
+{
+  "action": "add" | "update" | "delete",
+  "target": "news" | "members" | "publications",
+  "data": { ...the record... },
+  "summary": "One sentence describing what you did"
+}
+
+Schema for news: { id, date (ISO YYYY-MM-DD), type (publication|award|conference|opening|member|other), title, body, image ("") }
+Schema for members: { id, name, role (Principal Investigator|Postdoctoral Researcher|PhD Student|Master's Student|Undergraduate Researcher|Alumni), title, affiliation (default: "University of Maine"), bio, photo (""), email (""), scholar (""), linkedin (""), joined (4-digit year string) }
+Schema for publications: { id, year (number), title, authors, journal, doi ("" if none), tags (array) }
+
+Rules:
+- For "add": omit the id field
+- For "update" or "delete": include the id of the existing record
+- Use today's date if no date mentioned
+- Infer missing fields intelligently
+- Return ONLY raw JSON. No markdown fences. No explanation.
+
+Update request:
+
+${fullText}`;
+
+          const payload = JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 1024, temperature: 0.1 }
+          });
+
+          const apiKey = process.env.GEMINI_API_KEY;
+
+          const result = await new Promise((resolve, reject) => {
+            const req = https.request({
+              hostname: 'generativelanguage.googleapis.com',
+              path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+              }
+            }, res => {
+              let body = '';
+              res.on('data', d => body += d);
+              res.on('end', () => {
+                try { resolve(JSON.parse(body)); }
+                catch(e) { reject(new Error('Failed to parse Gemini response: ' + body)); }
+              });
+            });
+            req.on('error', reject);
+            req.write(payload);
+            req.end();
+          });
+
+          if (!result.candidates || !result.candidates[0]) {
+            throw new Error('No candidates in Gemini response: ' + JSON.stringify(result));
+          }
+
+          const rawText = result.candidates[0].content.parts[0].text.trim();
+          console.log('Gemini response:', rawText);
+
+          let update;
+          try {
+            const clean = rawText.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/,'').trim();
+            update = JSON.parse(clean);
+          } catch(e) {
+            const match = rawText.match(/\{[\s\S]*\}/);
+            if (match) update = JSON.parse(match[0]);
+            else throw new Error('Could not parse AI response: ' + rawText);
+          }
+
+          console.log('Parsed update:', JSON.stringify(update, null, 2));
+
+          let targetData, targetFile;
+          if      (update.target === 'news')         { targetData = news;    targetFile = 'data/news.json'; }
+          else if (update.target === 'members')      { targetData = members; targetFile = 'data/members.json'; }
+          else if (update.target === 'publications') { targetData = pubs;    targetFile = 'data/publications.json'; }
+          else throw new Error('Unknown target: ' + update.target);
+
+          if (update.action === 'add') {
+            const maxId = Math.max(...targetData.map(x => x.id), 0);
+            update.data.id = maxId + 1;
+            targetData.push(update.data);
+          } else if (update.action === 'update') {
+            const idx = targetData.findIndex(x => x.id === update.data.id);
+            if (idx === -1) throw new Error('Record id ' + update.data.id + ' not found');
+            targetData[idx] = { ...targetData[idx], ...update.data };
+          } else if (update.action === 'delete') {
+            const idx = targetData.findIndex(x => x.id === update.data.id);
+            if (idx === -1) throw new Error('Record id ' + update.data.id + ' not found');
+            targetData.splice(idx, 1);
+          } else {
+            throw new Error('Unknown action: ' + update.action);
+          }
+
+          fs.writeFileSync(targetFile, JSON.stringify(targetData, null, 2));
+          fs.writeFileSync('update_summary.txt', update.summary || 'Lab website updated.');
+          console.log('Done:', update.summary);
+          SCRIPT
+
+          node process_update.mjs
+
+      - name: Commit and push
+        run: |
+          SUMMARY=$(cat update_summary.txt 2>/dev/null || echo "Lab update")
+          git config user.name  "SusMat Bot"
+          git config user.email "bot@susmattech.github.io"
+          git add data/
+          git diff --cached --quiet || git commit -m "🤖 Bot: ${SUMMARY} (Issue #${{ github.event.issue.number }})"
+          git push
+
+      - name: Comment success and close issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('update_summary.txt', 'utf8').trim();
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `✅ **Update applied!**\n\n> ${summary}\n\n🌐 Website refreshes in **1–2 minutes**.\n\n*— SusMat Bot 🤖 (Gemini)*`
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
+
+      - name: Comment on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ **Update failed.** Please rephrase your request or check that \`GEMINI_API_KEY\` is set in repository secrets.\n\n*— SusMat Bot 🤖*`
+            });
